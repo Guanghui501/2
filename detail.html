@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detailed Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .detail {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Details</h1>
+    
+    <div id="details-container"></div>
+
+    <script>
+        // Function to get URL parameters
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const params = {};
+            urlParams.forEach((value, key) => {
+                params[key] = value;
+            });
+            return params;
+        }
+
+        // Get the parameters from the URL
+        const params = getUrlParams();
+        const detailsContainer = document.getElementById('details-container');
+
+        // Display the details
+        detailsContainer.innerHTML = `
+            <div class="detail"><strong>ID:</strong> ${params.id}</div>
+            <div class="detail"><strong>Formula:</strong> ${params.formula}</div>
+            <div class="detail"><strong>Energy:</strong> ${params.energy}</div>
+            <div class="detail"><strong>Mass Density:</strong> ${params.mass_density}</div>
+            <div class="detail"><strong>N Concentration:</strong> ${params.N_concentration}</div>
+            <div class="detail"><strong>E_d:</strong> ${params.E_d}</div>
+            <div class="detail"><strong>V_d:</strong> ${params.V_d}</div>
+            <div class="detail"><strong>P_d:</strong> ${params.P_d}</div>
+            <div class="detail"><strong>Positions:</strong> ${params.positions}</div>
+            <div class="detail"><strong>Cell:</strong> ${params.cell}</div>
+        `;
+    </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Database Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            cursor: pointer;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>JSON Database Viewer</h1>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Formula</th>
+                <th>Energy</th>
+                <th>Mass Density</th>
+                <th>N Concentration</th>
+                <th>E_d</th>
+                <th>V_d</th>
+                <th>P_d</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        let data = {};
+        let currentPage = 1;
+        let rowsPerPage = 5;
+
+        // Fetch the JSON data
+        fetch('db.json')
+            .then(response => response.json())
+            .then(jsonData => {
+                data = jsonData;
+                renderTable();
+            })
+            .catch(error => {
+                console.error('Error loading JSON data:', error);
+            });
+
+        // Render table with current page
+        function renderTable() {
+            const tableBody = document.querySelector('#data-table tbody');
+            tableBody.innerHTML = '';  // Clear existing rows
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = currentPage * rowsPerPage;
+            const paginatedData = Object.entries(data).slice(startIndex, endIndex);
+
+            paginatedData.forEach(([entryId, entry]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entryId}</td>
+                    <td>${entry.formula}</td>
+                    <td>${entry.energy}</td>
+                    <td>${entry.mass_density || 'N/A'}</td>
+                    <td>${entry.N_concentration || 'N/A'}</td>
+                    <td>${entry.E_d || 'N/A'}</td>
+                    <td>${entry.V_d || 'N/A'}</td>
+                    <td>${entry.P_d || 'N/A'}</td>
+                `;
+                // Add click event to open new page with detailed data
+                row.addEventListener('click', () => showDetailsInNewPage(entryId));
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Function to show detailed data in a new page
+        function showDetailsInNewPage(entryId) {
+            const entry = data[entryId];
+            const queryParams = new URLSearchParams({
+                id: entryId,
+                formula: entry.formula,
+                energy: entry.energy,
+                mass_density: entry.mass_density || 'N/A',
+                N_concentration: entry.N_concentration || 'N/A',
+                E_d: entry.E_d || 'N/A',
+                V_d: entry.V_d || 'N/A',
+                P_d: entry.P_d || 'N/A',
+                positions: JSON.stringify(entry.positions || 'N/A'),
+                cell: JSON.stringify(entry.cell || 'N/A')
+            });
+            
+            // Open a new page with the detailed data in the URL
+            window.open(`detail.html?${queryParams.toString()}`, '_blank');
+        }
+    </script>
+</body>
+</html>
