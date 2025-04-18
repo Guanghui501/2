@@ -64,7 +64,7 @@
     <script>
         let data = {};
         let currentPage = 1;
-        let rowsPerPage = 20;
+        const rowsPerPage = 20;
 
         // Fetch the JSON data
         fetch('db.json')
@@ -113,9 +113,12 @@
 
         // Change page (prev/next)
         function changePage(direction) {
+            const totalRows = Object.keys(data).length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+
             if (direction === 'prev' && currentPage > 1) {
                 currentPage--;
-            } else if (direction === 'next') {
+            } else if (direction === 'next' && currentPage < totalPages) {
                 currentPage++;
             }
             renderTable();
