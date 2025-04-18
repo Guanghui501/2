@@ -111,4 +111,42 @@
             updatePagination(filteredData.length);
         }
 
-        // Change page (prev
+        // Change page (prev/next)
+        function changePage(direction) {
+            if (direction === 'prev' && currentPage > 1) {
+                currentPage--;
+            } else if (direction === 'next') {
+                currentPage++;
+            }
+            renderTable();
+        }
+
+        // Update pagination buttons
+        function updatePagination(totalRows) {
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            const pageNumberElement = document.getElementById('page-number');
+            pageNumberElement.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
+        // Function to show detailed data in a new page
+        function showDetailsInNewPage(entryId) {
+            const entry = data[entryId];
+            const queryParams = new URLSearchParams({
+                id: entryId,
+                formula: entry.formula,
+                energy: entry.energy,
+                mass_density: entry.mass_density || 'N/A',
+                N_concentration: entry.N_concentration || 'N/A',
+                E_d: entry.E_d || 'N/A',
+                V_d: entry.V_d || 'N/A',
+                P_d: entry.P_d || 'N/A',
+                positions: JSON.stringify(entry.positions || 'N/A'),
+                cell: JSON.stringify(entry.cell || 'N/A')
+            });
+
+            // Open a new page with the detailed data in the URL
+            window.open(`detail.html?${queryParams.toString()}`, '_blank');
+        }
+    </script>
+</body>
+</html>
