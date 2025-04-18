@@ -23,17 +23,19 @@
         }
         .pagination {
             margin-top: 20px;
-            text-align: center;
         }
         .pagination button {
-            padding: 5px 10px;
+            padding: 8px;
             margin: 0 5px;
-            cursor: pointer;
         }
     </style>
 </head>
 <body>
     <h1>JSON Database Viewer</h1>
+
+    <!-- Search Box -->
+    <input type="text" id="search-box" placeholder="Search by formula..." oninput="renderTable()" style="margin-bottom: 10px;">
+
     <table id="data-table">
         <thead>
             <tr>
@@ -52,6 +54,13 @@
         </tbody>
     </table>
 
+    <!-- Pagination Controls -->
+    <div class="pagination">
+        <button onclick="changePage('prev')">Prev</button>
+        <span id="page-number">Page 1</span>
+        <button onclick="changePage('next')">Next</button>
+    </div>
+
     <script>
         let data = {};
         let currentPage = 1;
@@ -68,13 +77,19 @@
                 console.error('Error loading JSON data:', error);
             });
 
-        // Render table with current page
+        // Render table with current page and search query
         function renderTable() {
             const tableBody = document.querySelector('#data-table tbody');
             tableBody.innerHTML = '';  // Clear existing rows
+
+            const searchQuery = document.getElementById('search-box').value.toLowerCase();
+            const filteredData = Object.entries(data).filter(([entryId, entry]) =>
+                entry.formula.toLowerCase().includes(searchQuery)
+            );
+
             const startIndex = (currentPage - 1) * rowsPerPage;
             const endIndex = currentPage * rowsPerPage;
-            const paginatedData = Object.entries(data).slice(startIndex, endIndex);
+            const paginatedData = filteredData.slice(startIndex, endIndex);
 
             paginatedData.forEach(([entryId, entry]) => {
                 const row = document.createElement('tr');
@@ -92,27 +107,8 @@
                 row.addEventListener('click', () => showDetailsInNewPage(entryId));
                 tableBody.appendChild(row);
             });
+
+            updatePagination(filteredData.length);
         }
 
-        // Function to show detailed data in a new page
-        function showDetailsInNewPage(entryId) {
-            const entry = data[entryId];
-            const queryParams = new URLSearchParams({
-                id: entryId,
-                formula: entry.formula,
-                energy: entry.energy,
-                mass_density: entry.mass_density || 'N/A',
-                N_concentration: entry.N_concentration || 'N/A',
-                E_d: entry.E_d || 'N/A',
-                V_d: entry.V_d || 'N/A',
-                P_d: entry.P_d || 'N/A',
-                positions: JSON.stringify(entry.positions || 'N/A'),
-                cell: JSON.stringify(entry.cell || 'N/A')
-            });
-            
-            // Open a new page with the detailed data in the URL
-            window.open(`detail.html?${queryParams.toString()}`, '_blank');
-        }
-    </script>
-</body>
-</html>
+        // Change page (prev
