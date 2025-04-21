@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Material Detail - Nemesis</title>
     <script src="https://3dmol.org/build/3Dmol-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
@@ -20,9 +21,12 @@
             max-width: 800px;
             margin: 30px auto;
             font-size: 18px;
+            word-break: break-word;
         }
         .info h2 {
             text-align: center;
+            font-size: 26px;
+            overflow-wrap: break-word;
         }
     </style>
 </head>
@@ -53,12 +57,12 @@
                     return;
                 }
 
-                // 更新文字信息
+                // 更新文字信息，保留三位小数
                 document.getElementById('formula').innerText = material.formula;
-                document.getElementById('energy').innerText = material.energy.toFixed(4);
+                document.getElementById('energy').innerText = material.energy.toFixed(3);
                 document.getElementById('density').innerText = material.mass_density.toFixed(3);
-                document.getElementById('n_concentration').innerText = material.N_concentration.toFixed(2);
-                document.getElementById('ed').innerText = material.E_d.toFixed(4);
+                document.getElementById('n_concentration').innerText = material.N_concentration.toFixed(3);
+                document.getElementById('ed').innerText = material.E_d.toFixed(3);
                 document.getElementById('vd').innerText = material.V_d.toFixed(3);
                 document.getElementById('pd').innerText = material.P_d.toFixed(3);
 
