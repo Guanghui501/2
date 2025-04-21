@@ -62,6 +62,12 @@
     </div>
 
     <script>
+        function formatNumber(value) {
+            if (value === undefined || value === null || isNaN(value)) {
+                return 'N/A'
+            }
+            return parseFloat(value).toFixed(3);
+        }
         let data = {};
         let currentPage = 1;
         const rowsPerPage = 20;
@@ -96,12 +102,12 @@
                 row.innerHTML = `
                     <td>${entryId}</td>
                     <td>${entry.formula}</td>
-                    <td>${entry.energy}</td>
-                    <td>${entry.mass_density || 'N/A'}</td>
-                    <td>${entry.N_concentration || 'N/A'}</td>
-                    <td>${entry.E_d || 'N/A'}</td>
-                    <td>${entry.V_d || 'N/A'}</td>
-                    <td>${entry.P_d || 'N/A'}</td>
+                    <td>${formatNumber(entry.energy)}</td>
+                    <td>${formatNumber(entry.mass_density) || 'N/A'}</td>
+                    <td>${formatNumber(entry.N_concentration) || 'N/A'}</td>
+                    <td>${formatNumber(entry.E_d) || 'N/A'}</td>
+                    <td>${formatNumber(entry.V_d) || 'N/A'}</td>
+                    <td>${formatNumber(entry.P_d) || 'N/A'}</td>
                 `;
                 // Add click event to open new page with detailed data
                 row.addEventListener('click', () => showDetailsInNewPage(entryId));
