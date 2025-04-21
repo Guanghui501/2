@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detailed Data</title>
     <style>
         body {
@@ -30,13 +31,12 @@
     <div id="viewer"></div>
 
     <script>
-        // 获取 URL 参数
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             const params = {};
             urlParams.forEach((value, key) => {
                 try {
-                    params[key] = JSON.parse(value);  // 尝试解析 JSON 数据
+                    params[key] = JSON.parse(value);
                 } catch {
                     params[key] = value;
                 }
@@ -47,7 +47,6 @@
         const params = getUrlParams();
         const detailsContainer = document.getElementById('details-container');
 
-        // 渲染文字信息
         detailsContainer.innerHTML = `
             <div class="detail"><strong>ID:</strong> ${params.id}</div>
             <div class="detail"><strong>Formula:</strong> ${params.formula}</div>
@@ -59,24 +58,33 @@
             <div class="detail"><strong>P_d (GPa):</strong> ${params.P_d}</div>
         `;
 
-        // 生成并渲染分子结构
+        // 原子符号推测函数（基于 formula）
+        function getAtomSymbols(formula) {
+            const match = formula.match(/([A-Z][a-z]*)(\d*)/g);
+            if (!match) return [];
+            let atoms = [];
+            match.forEach(part => {
+                const [_, element, count] = part.match(/([A-Z][a-z]*)(\d*)/) || [];
+                const num = parseInt(count || '1');
+                atoms = atoms.concat(Array(num).fill(element));
+            });
+            return atoms;
+        }
+
         function renderMolecule() {
-            const viewer = $3Dmol.createViewer("viewer", { backgroundColor: "white" });
+            const element = document.getElementById("viewer");
+            const config = { backgroundColor: "white" };
+            const viewer = $3Dmol.createViewer(element, config);
 
             const positions = params.positions;
-            const symbols = params.symbols;
-
-            if (!Array.isArray(positions) || !Array.isArray(symbols) || symbols.length !== positions.length) {
-                viewer.addLabel("⚠️ 结构数据无法解析", {
-                    position: { x: 0, y: 0, z: 0 },
-                    backgroundColor: "red"
-                });
+            const atomSymbols = getAtomSymbols(params.formula);
+            if (!Array.isArray(positions) || atomSymbols.length !== positions.length) {
+                viewer.addLabel("⚠️ 结构数据无法解析", { position: { x: 0, y: 0, z: 0 }, backgroundColor: "red" });
                 viewer.render();
                 return;
             }
 
-            // 生成 XYZ 格式字符串
-            const xyzData = symbols.map((sym, i) => {
+            const xyzData = atomSymbols.map((sym, i) => {
                 const [x, y, z] = positions[i];
                 return `${sym} ${x} ${y} ${z}`;
             }).join("\n");
