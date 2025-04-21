@@ -10,43 +10,92 @@
             margin: 20px;
         }
         .detail {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+        }
+        #viewer {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
         }
     </style>
+    <!-- 引入 3Dmol.js -->
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 </head>
 <body>
     <h1>Details</h1>
-    
+
     <div id="details-container"></div>
 
+    <h2>Atomic Structure Viewer</h2>
+    <div id="viewer"></div>
+
     <script>
-        // Function to get URL parameters
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             const params = {};
             urlParams.forEach((value, key) => {
-                params[key] = value;
+                try {
+                    params[key] = JSON.parse(value);
+                } catch {
+                    params[key] = value;
+                }
             });
             return params;
         }
 
-        // Get the parameters from the URL
         const params = getUrlParams();
         const detailsContainer = document.getElementById('details-container');
 
-        // Display the details
         detailsContainer.innerHTML = `
             <div class="detail"><strong>ID:</strong> ${params.id}</div>
             <div class="detail"><strong>Formula:</strong> ${params.formula}</div>
-            <div class="detail"><strong>Energy:</strong> ${params.energy}</div>
-            <div class="detail"><strong>Mass Density:</strong> ${params.mass_density}</div>
-            <div class="detail"><strong>N Concentration:</strong> ${params.N_concentration}</div>
-            <div class="detail"><strong>E_d:</strong> ${params.E_d}</div>
-            <div class="detail"><strong>V_d:</strong> ${params.V_d}</div>
-            <div class="detail"><strong>P_d:</strong> ${params.P_d}</div>
-            <div class="detail"><strong>Positions:</strong> ${params.positions}</div>
-            <div class="detail"><strong>Cell:</strong> ${params.cell}</div>
+            <div class="detail"><strong>Energy (eV):</strong> ${params.energy}</div>
+            <div class="detail"><strong>Mass Density (g/cm³):</strong> ${params.mass_density}</div>
+            <div class="detail"><strong>N Concentration (%):</strong> ${params.N_concentration}</div>
+            <div class="detail"><strong>E_d (kJ/g):</strong> ${params.E_d}</div>
+            <div class="detail"><strong>V_d (km/s):</strong> ${params.V_d}</div>
+            <div class="detail"><strong>P_d (GPa):</strong> ${params.P_d}</div>
         `;
+
+        // 原子符号推测函数（基于 formula）
+        function getAtomSymbols(formula) {
+            const match = formula.match(/([A-Z][a-z]*)(\d*)/g);
+            if (!match) return [];
+            let atoms = [];
+            match.forEach(part => {
+                const [_, element, count] = part.match(/([A-Z][a-z]*)(\d*)/) || [];
+                const num = parseInt(count || '1');
+                atoms = atoms.concat(Array(num).fill(element));
+            });
+            return atoms;
+        }
+
+        function renderMolecule() {
+            const element = document.getElementById("viewer");
+            const config = { backgroundColor: "white" };
+            const viewer = $3Dmol.createViewer(element, config);
+
+            const positions = params.positions;
+            const atomSymbols = getAtomSymbols(params.formula);
+            if (!Array.isArray(positions) || atomSymbols.length !== positions.length) {
+                viewer.addLabel("⚠️ 结构数据无法解析", { position: { x: 0, y: 0, z: 0 }, backgroundColor: "red" });
+                viewer.render();
+                return;
+            }
+
+            const xyzData = atomSymbols.map((sym, i) => {
+                const [x, y, z] = positions[i];
+                return `${sym} ${x} ${y} ${z}`;
+            }).join("\n");
+
+            viewer.addModel(xyzData, "xyz");
+            viewer.setStyle({}, { stick: {}, sphere: { scale: 0.3 } });
+            viewer.zoomTo();
+            viewer.render();
+        }
+
+        renderMolecule();
     </script>
 </body>
 </html>
