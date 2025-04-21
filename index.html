@@ -41,12 +41,12 @@
             <tr>
                 <th onclick="sortBy('id')">ID</th>
                 <th onclick="sortBy('formula')">Formula</th>
-                <th onclick="sortBy('energy')">Energy (eV)</th>
-                <th onclick="sortBy('mass_density')">Mass Density (g/cm<sup>3</sup>)</th>
-                <th onclick="sortBy('N_concentration')">N Concentration (%)</th>
-                <th onclick="sortBy('E_d')">E_d (kJ/g)</th>
-                <th onclick="sortBy('V_d')">V_d (km/s)</th>
-                <th onclick="sortBy('P_d')">P_d (GPa)</th>
+                <th onclick="sortBy('energy')"><span id="th-energy">Energy (eV)</span></th>
+                <th onclick="sortBy('mass_density')"><span id="th-mass_density">Mass Density (g/cm<sup>3</sup>)</span></th>
+                <th onclick="sortBy('N_concentration')"><span id="th-N_concentration">N Concentration (%)</span></th>
+                <th onclick="sortBy('E_d')"><span id="th-E_d">E_d (kJ/g)</span></th>
+                <th onclick="sortBy('V_d')"><span id="th-V_d">V_d (km/s)</span></th>
+                <th onclick="sortBy('P_d')"><span id="th-P_d">P_d (GPa)</span></th>
             </tr>
         </thead>
 
@@ -114,6 +114,33 @@
             const filteredData = Object.entries(data).filter(([entryId, entry]) =>
                 entry.formula.toLowerCase().includes(searchQuery)
             );
+
+        function updateSortArrows() {
+            const allHeaders = ['energy', 'mass_density', 'N_concentration', 'E_d', 'V_d', 'P_d'];
+            allHeaders.forEach(header => {
+                const thSpan = document.getElementById('th-' + header);
+                if (thSpan) {
+                    if (sortColumn === header) {
+                        thSpan.textContent = getColumnDisplayName(header) + (sortDirection === 'asc' ? ' ↑' : ' ↓');
+                    } else {
+                        thSpan.textContent = getColumnDisplayName(header);
+                    }
+                }
+            });
+        }
+    
+        function getColumnDisplayName(col) {
+            switch (col) {
+                case 'energy': return 'Energy (eV)';
+                case 'mass_density': return 'Mass Density (g/cm³)';
+                case 'N_concentration': return 'N Concentration (%)';
+                case 'E_d': return 'E_d (kJ/g)';
+                case 'V_d': return 'V_d (km/s)';
+                case 'P_d': return 'P_d (GPa)';
+                default: return col;
+            }
+        }
+    
         // 排序
         if (sortColumn) {
            filteredData.sort((a, b) => {
@@ -155,6 +182,7 @@
             });
 
             updatePagination(filteredData.length);
+            updateSortArrows();
         }
 
         // Change page (prev/next)
