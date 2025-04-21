@@ -62,6 +62,14 @@
     </div>
 
     <script>
+        function toSubscript(text) {
+    const subscriptMap = {
+        '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+        '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉'
+    };
+    return text.replace(/\d/g, digit => subscriptMap[digit] || digit);
+}
+
         function formatNumber(value) {
             if (value === undefined || value === null || isNaN(value)) {
                 return 'N/A'
@@ -101,7 +109,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${entryId}</td>
-                    <td>${entry.formula}</td>
+                    <td>${toSubscript(entry.formula)}</td>
                     <td>${formatNumber(entry.energy)}</td>
                     <td>${formatNumber(entry.mass_density) || 'N/A'}</td>
                     <td>${formatNumber(entry.N_concentration) || 'N/A'}</td>
