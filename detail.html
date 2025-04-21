@@ -1,101 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detailed Data</title>
+    <meta charset="UTF-8" />
+    <title>Material Detail - Nemesis</title>
+    <script src="https://3dmol.org/build/3Dmol-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        .detail {
-            margin-bottom: 10px;
-        }
         #viewer {
-            width: 100%;
-            height: 400px;
+            width: 600px;
+            height: 600px;
+            margin: auto;
             border: 1px solid #ccc;
-            margin-top: 20px;
+        }
+        .info {
+            max-width: 800px;
+            margin: 30px auto;
+            font-size: 18px;
+        }
+        .info h2 {
+            text-align: center;
         }
     </style>
-    <!-- 引入 3Dmol.js -->
-    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 </head>
 <body>
-    <h1>Details</h1>
+    <div class="info">
+        <h2 id="formula">Loading...</h2>
+        <p><strong>Energy:</strong> <span id="energy"></span> eV</p>
+        <p><strong>Mass Density:</strong> <span id="density"></span> g/cm³</p>
+        <p><strong>N Concentration:</strong> <span id="n_concentration"></span>%</p>
+        <p><strong>Detonation Energy (E<sub>d</sub>):</strong> <span id="ed"></span> kJ/g</p>
+        <p><strong>Detonation Velocity (V<sub>d</sub>):</strong> <span id="vd"></span> km/s</p>
+        <p><strong>Detonation Pressure (P<sub>d</sub>):</strong> <span id="pd"></span> GPa</p>
+    </div>
 
-    <div id="details-container"></div>
-
-    <h2>Atomic Structure Viewer</h2>
     <div id="viewer"></div>
 
     <script>
-        function getUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const params = {};
-            urlParams.forEach((value, key) => {
-                try {
-                    params[key] = JSON.parse(value);
-                } catch {
-                    params[key] = value;
+        // 获取 URL 参数中的 id
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+
+        fetch('db.json')
+            .then(response => response.json())
+            .then(data => {
+                const material = data[id];
+                if (!material) {
+                    document.getElementById('formula').innerText = "Material not found.";
+                    return;
                 }
-            });
-            return params;
-        }
 
-        const params = getUrlParams();
-        const detailsContainer = document.getElementById('details-container');
+                // 更新文字信息
+                document.getElementById('formula').innerText = material.formula;
+                document.getElementById('energy').innerText = material.energy.toFixed(4);
+                document.getElementById('density').innerText = material.mass_density.toFixed(3);
+                document.getElementById('n_concentration').innerText = material.N_concentration.toFixed(2);
+                document.getElementById('ed').innerText = material.E_d.toFixed(4);
+                document.getElementById('vd').innerText = material.V_d.toFixed(3);
+                document.getElementById('pd').innerText = material.P_d.toFixed(3);
 
-        detailsContainer.innerHTML = `
-            <div class="detail"><strong>ID:</strong> ${params.id}</div>
-            <div class="detail"><strong>Formula:</strong> ${params.formula}</div>
-            <div class="detail"><strong>Energy (eV):</strong> ${params.energy}</div>
-            <div class="detail"><strong>Mass Density (g/cm³):</strong> ${params.mass_density}</div>
-            <div class="detail"><strong>N Concentration (%):</strong> ${params.N_concentration}</div>
-            <div class="detail"><strong>E_d (kJ/g):</strong> ${params.E_d}</div>
-            <div class="detail"><strong>V_d (km/s):</strong> ${params.V_d}</div>
-            <div class="detail"><strong>P_d (GPa):</strong> ${params.P_d}</div>
-        `;
+                // 生成 CIF 字符串
+                const cif = generateCIF(material);
 
-        // 原子符号推测函数（基于 formula）
-        function getAtomSymbols(formula) {
-            const match = formula.match(/([A-Z][a-z]*)(\d*)/g);
-            if (!match) return [];
-            let atoms = [];
-            match.forEach(part => {
-                const [_, element, count] = part.match(/([A-Z][a-z]*)(\d*)/) || [];
-                const num = parseInt(count || '1');
-                atoms = atoms.concat(Array(num).fill(element));
-            });
-            return atoms;
-        }
-
-        function renderMolecule() {
-            const element = document.getElementById("viewer");
-            const config = { backgroundColor: "white" };
-            const viewer = $3Dmol.createViewer(element, config);
-
-            const positions = params.positions;
-            const atomSymbols = getAtomSymbols(params.formula);
-            if (!Array.isArray(positions) || atomSymbols.length !== positions.length) {
-                viewer.addLabel("⚠️ 结构数据无法解析", { position: { x: 0, y: 0, z: 0 }, backgroundColor: "red" });
+                const viewer = $3Dmol.createViewer("viewer", { backgroundColor: "white" });
+                viewer.addModel(cif, "cif");
+                viewer.setStyle({}, { stick: {}, sphere: { scale: 0.3 } });
+                viewer.zoomTo();
                 viewer.render();
-                return;
+            });
+
+        function generateCIF(data) {
+            const { symbols, positions, cell } = data;
+            const invCell = math.inv(cell);
+
+            let cif = `data_material\n`;
+            cif += `_cell_length_a   ${cell[0][0].toFixed(4)}\n`;
+            cif += `_cell_length_b   ${cell[1][1].toFixed(4)}\n`;
+            cif += `_cell_length_c   ${cell[2][2].toFixed(4)}\n`;
+            cif += `_cell_angle_alpha  90\n_cell_angle_beta   90\n_cell_angle_gamma  90\n`;
+            cif += `_symmetry_space_group_name_H-M   'P 1'\n`;
+            cif += `_symmetry_Int_Tables_number   1\n\n`;
+            cif += `_atom_site_label  _atom_site_type_symbol  _atom_site_fract_x  _atom_site_fract_y  _atom_site_fract_z\n`;
+
+            for (let i = 0; i < symbols.length; i++) {
+                const frac = math.multiply(invCell, positions[i]);
+                cif += `${symbols[i]}${i + 1}  ${symbols[i]}  ${frac[0].toFixed(6)}  ${frac[1].toFixed(6)}  ${frac[2].toFixed(6)}\n`;
             }
 
-            const xyzData = atomSymbols.map((sym, i) => {
-                const [x, y, z] = positions[i];
-                return `${sym} ${x} ${y} ${z}`;
-            }).join("\n");
-
-            viewer.addModel(xyzData, "xyz");
-            viewer.setStyle({}, { stick: {}, sphere: { scale: 0.3 } });
-            viewer.zoomTo();
-            viewer.render();
+            return cif;
         }
-
-        renderMolecule();
     </script>
 </body>
 </html>
