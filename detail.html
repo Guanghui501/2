@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Material Detail - Nemesis</title>
-    <script src="https://3dmol.org/build/3Dmol-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.1/3Dmol-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
     <style>
         body {
@@ -16,6 +16,9 @@
             height: 600px;
             margin: auto;
             border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .info {
             max-width: 600px;
@@ -28,6 +31,11 @@
             text-align: center;
             font-size: 26px;
             overflow-wrap: break-word;
+        }
+        #viewer-message {
+            font-size: 16px;
+            color: #666;
+            text-align: center;
         }
     </style>
 </head>
@@ -42,10 +50,11 @@
         <p><strong>Detonation Pressure (P<sub>d</sub>):</strong> <span id="pd"></span> GPa</p>
     </div>
 
-    <div id="viewer"></div>
+    <div id="viewer">
+        <div id="viewer-message">Loading structure...</div>
+    </div>
 
     <script>
-        // 获取 URL 参数中的 id
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
 
@@ -55,26 +64,38 @@
                 const material = data[id];
                 if (!material) {
                     document.getElementById('formula').innerText = "Material not found.";
+                    document.getElementById('viewer-message').innerText = "No structure data.";
                     return;
                 }
 
-                // 更新文字信息，保留三位小数
                 document.getElementById('formula').innerText = material.formula;
-                document.getElementById('energy').innerText = material.energy.toFixed(3);
-                document.getElementById('density').innerText = material.mass_density.toFixed(3);
-                document.getElementById('n_concentration').innerText = material.N_concentration.toFixed(3);
-                document.getElementById('ed').innerText = material.E_d.toFixed(3);
-                document.getElementById('vd').innerText = material.V_d.toFixed(3);
-                document.getElementById('pd').innerText = material.P_d.toFixed(3);
+                document.getElementById('energy').innerText = material.energy?.toFixed(3) ?? 'N/A';
+                document.getElementById('density').innerText = material.mass_density?.toFixed(3) ?? 'N/A';
+                document.getElementById('n_concentration').innerText = material.N_concentration?.toFixed(3) ?? 'N/A';
+                document.getElementById('ed').innerText = material.E_d?.toFixed(3) ?? 'N/A';
+                document.getElementById('vd').innerText = material.V_d?.toFixed(3) ?? 'N/A';
+                document.getElementById('pd').innerText = material.P_d?.toFixed(3) ?? 'N/A';
 
-                // 生成 CIF 字符串
-                const cif = generateCIF(material);
+                try {
+                    const cif = generateCIF(material);
+                    const viewer = $3Dmol.createViewer("viewer", { backgroundColor: "white" });
+                    viewer.addModel(cif, "cif");
+                    viewer.setStyle({}, { stick: {}, sphere: { scale: 0.3 } });
+                    viewer.zoomTo();
+                    viewer.render();
 
-                const viewer = $3Dmol.createViewer("viewer", { backgroundColor: "white" });
-                viewer.addModel(cif, "cif");
-                viewer.setStyle({}, { stick: {}, sphere: { scale: 0.3 } });
-                viewer.zoomTo();
-                viewer.render();
+                    // 移除加载信息
+                    const messageDiv = document.getElementById("viewer-message");
+                    if (messageDiv) messageDiv.remove();
+                } catch (err) {
+                    console.error("3D structure rendering failed:", err);
+                    document.getElementById('viewer-message').innerText = "Failed to load 3D structure.";
+                }
+            })
+            .catch(err => {
+                console.error("Data fetch error:", err);
+                document.getElementById('formula').innerText = "Failed to load material data.";
+                document.getElementById('viewer-message').innerText = "Failed to fetch structure.";
             });
 
         function generateCIF(data) {
