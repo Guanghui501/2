@@ -39,16 +39,17 @@
     <table id="data-table">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Formula</th>
-                <th>Energy (eV)</th>
-                <th>Mass Density (g/cm<sup>3</sup>)</th>
-                <th>N Concentration (%)</th>
-                <th>E_d (kJ/g)</th>
-                <th>V_d (km/s)</th>
-                <th>P_d (GPa)</th>
+                <th onclick="sortBy('id')">ID</th>
+                <th onclick="sortBy('formula')">Formula</th>
+                <th onclick="sortBy('energy')">Energy (eV)</th>
+                <th onclick="sortBy('mass_density')">Mass Density (g/cm<sup>3</sup>)</th>
+                <th onclick="sortBy('N_concentration')">N Concentration (%)</th>
+                <th onclick="sortBy('E_d')">E_d (kJ/g)</th>
+                <th onclick="sortBy('V_d')">V_d (km/s)</th>
+                <th onclick="sortBy('P_d')">P_d (GPa)</th>
             </tr>
         </thead>
+
         <tbody>
             <!-- Data will be inserted here -->
         </tbody>
@@ -76,6 +77,9 @@
             }
             return parseFloat(value).toFixed(3);
         }
+        let sortColumn = null;
+        let sortDirection = 'desc';
+
         let data = {};
         let currentPage = 1;
         const rowsPerPage = 20;
@@ -91,6 +95,16 @@
                 console.error('Error loading JSON data:', error);
             });
 
+        function sortBy(column) {
+            if (sortColumn === column) {
+                sortDirection = (sortDirection === 'asc') ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'desc'; // 默认第一次是降序
+            }
+            renderTable();
+        }
+
         // Render table with current page and search query
         function renderTable() {
             const tableBody = document.querySelector('#data-table tbody');
@@ -100,6 +114,24 @@
             const filteredData = Object.entries(data).filter(([entryId, entry]) =>
                 entry.formula.toLowerCase().includes(searchQuery)
             );
+        // 排序
+        if (sortColumn) {
+           filteredData.sort((a, b) => {
+                let aVal = sortColumn === 'id' ? parseInt(a[0]) : a[1][sortColumn];
+                let bVal = sortColumn === 'id' ? parseInt(b[0]) : b[1][sortColumn];
+
+                if (aVal === undefined || aVal === null) aVal = -Infinity;
+                if (bVal === undefined || bVal === null) bVal = -Infinity;
+
+                if (typeof aVal === 'number' && typeof bVal === 'number') {
+                    return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                } else {
+                    return sortDirection === 'asc'
+                        ? String(aVal).localeCompare(String(bVal))
+                        : String(bVal).localeCompare(String(aVal));
+                }
+            });
+        }
 
             const startIndex = (currentPage - 1) * rowsPerPage;
             const endIndex = currentPage * rowsPerPage;
