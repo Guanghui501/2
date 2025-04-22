@@ -84,21 +84,15 @@
             padding: 15px;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            background: #f8f9fa;
         }
         .atom-label-container {
             display: inline-flex;
             align-items: center;
             margin: 5px;
-            padding: 6px 12px;
-            background: #e3f2fd;
-            border-radius: 15px;
-            font-size: 14px;
-            color: #1976d2;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .atom-label {
             margin-right: 8px;
+            font-size: 14px;
         }
         .atom-preview {
             width: 24px;
@@ -199,7 +193,7 @@
             
             const label = document.createElement('span');
             label.className = 'atom-label';
-            label.innerHTML = `${element}${count > 1 ? `<sub>${count}</sub>` : ''}`;
+            label.textContent = `${element}${count > 1 ? count : ''}`;
             
             container.appendChild(label);
             container.appendChild(createAtomPreview(element));
