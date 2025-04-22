@@ -4,8 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Material Detail - Nemesis</title>
-    <script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.1/3Dmol-min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -68,7 +67,8 @@
                     return;
                 }
 
-                document.getElementById('formula').innerText = material.formula;
+                const formattedFormula = formatFormula(material.formula);
+                document.getElementById('formula').innerHTML = formattedFormula;
                 document.getElementById('energy').innerText = material.energy?.toFixed(3) ?? 'N/A';
                 document.getElementById('density').innerText = material.mass_density?.toFixed(3) ?? 'N/A';
                 document.getElementById('n_concentration').innerText = material.N_concentration?.toFixed(3) ?? 'N/A';
@@ -77,14 +77,13 @@
                 document.getElementById('pd').innerText = material.P_d?.toFixed(3) ?? 'N/A';
 
                 try {
-                    const cif = generateCIF(material);
+                    const xyz = generateXYZ(material);
                     const viewer = $3Dmol.createViewer("viewer", { backgroundColor: "white" });
-                    viewer.addModel(cif, "cif", { doAssembly: true });
+                    viewer.addModel(xyz, "xyz");
                     viewer.setStyle({}, { stick: {}, sphere: { scale: 0.3 } });
                     viewer.zoomTo();
                     viewer.render();
 
-                    // 移除加载信息
                     const messageDiv = document.getElementById("viewer-message");
                     if (messageDiv) messageDiv.remove();
                 } catch (err) {
@@ -98,31 +97,18 @@
                 document.getElementById('viewer-message').innerText = "Failed to fetch structure.";
             });
 
-        function generateCIF(data) {
-            const { symbols, positions, cell } = data;
-
-            // 异常检查：cell矩阵是否合法
-            if (!cell || cell.length !== 3 || cell.some(row => row.length !== 3)) {
-                throw new Error("Invalid cell matrix");
-            }
-
-            const invCell = math.inv(cell);
-
-            let cif = `data_material\n`;
-            cif += `_cell_length_a   ${cell[0][0].toFixed(4)}\n`;
-            cif += `_cell_length_b   ${cell[1][1].toFixed(4)}\n`;
-            cif += `_cell_length_c   ${cell[2][2].toFixed(4)}\n`;
-            cif += `_cell_angle_alpha  90\n_cell_angle_beta   90\n_cell_angle_gamma  90\n`;
-            cif += `_symmetry_space_group_name_H-M   'P 1'\n`;
-            cif += `_symmetry_Int_Tables_number   1\n\n`;
-            cif += `_atom_site_label  _atom_site_type_symbol  _atom_site_fract_x  _atom_site_fract_y  _atom_site_fract_z\n`;
-
+        function generateXYZ(data) {
+            const { symbols, positions } = data;
+            let xyz = `${symbols.length}\n\n`;
             for (let i = 0; i < symbols.length; i++) {
-                const frac = math.multiply(invCell, positions[i]);
-                cif += `${symbols[i]}${i + 1}  ${symbols[i]}  ${frac[0].toFixed(6)}  ${frac[1].toFixed(6)}  ${frac[2].toFixed(6)}\n`;
+                const [x, y, z] = positions[i];
+                xyz += `${symbols[i]} ${x.toFixed(6)} ${y.toFixed(6)} ${z.toFixed(6)}\n`;
             }
+            return xyz;
+        }
 
-            return cif;
+        function formatFormula(formula) {
+            return formula.replace(/(\D)(\d+)/g, (_, element, num) => `${element}<sub>${num}</sub>`);
         }
     </script>
 </body>
