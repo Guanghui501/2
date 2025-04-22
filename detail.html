@@ -99,6 +99,9 @@
             height: 24px;
             position: relative;
             margin-left: 5px;
+            background-color: white;
+            border-radius: 50%;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -163,17 +166,23 @@
         const container = document.createElement('div');
         container.className = 'atom-preview';
         
-        // 创建一个小的3Dmol视图来显示单个原子
         const viewer = $3Dmol.createViewer(container, {
             width: 24,
             height: 24,
-            backgroundColor: "transparent"
+            backgroundColor: "white"
         });
         
-        // 添加单个原子
         viewer.addModel(`HETATM 1 ${element} X 1 0 0 0 0 0 ${element}`, "pdb");
-        viewer.setStyle({}, {sphere: {scale: 0.3, colorscheme: 'Jmol'}});
+        viewer.setStyle({}, {
+            sphere: {
+                scale: 0.3,
+                colorscheme: 'Jmol'
+            } 
+        });
+        
         viewer.zoomTo();
+        viewer.setViewStyle({style: "outline"});
+        viewer.setBackgroundColor(0xffffff);
         viewer.render();
         
         return container;
