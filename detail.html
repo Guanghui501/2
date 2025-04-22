@@ -82,15 +82,15 @@
         }
         .tooltip {
             position: fixed;
-            background: white;
-            border: 1px solid #ccc;
-            padding: 4px 8px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
             border-radius: 4px;
             pointer-events: none;
             display: none;
             font-size: 14px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             z-index: 1000;
+            transform: translate(10px, 10px);
         }
     </style>
 </head>
@@ -153,26 +153,34 @@
     function initViewerInteractions() {
         const viewerElement = document.getElementById('viewer');
         tooltip = document.getElementById('atom-tooltip');
+        let lastAtom = null;
 
-        viewerElement.addEventListener('mousemove', (event) => {
+        const handleMouseMove = (event) => {
             const rect = viewerElement.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
             
-            const atom = viewer.getHoveredAtom({x: x, y: y});
+            const picked = viewer.getModel(0).selectedAtoms({x: x, y: y});
             
-            if (atom) {
-                tooltip.textContent = atom.elem;
-                tooltip.style.left = `${event.clientX + 10}px`;
-                tooltip.style.top = `${event.clientY + 10}px`;
-                tooltip.style.display = 'block';
+            if (picked.length > 0) {
+                const atom = picked[0];
+                if (atom !== lastAtom) {
+                    tooltip.textContent = atom.elem;
+                    tooltip.style.left = `${event.clientX + 15}px`;
+                    tooltip.style.top = `${event.clientY + 15}px`;
+                    tooltip.style.display = 'block';
+                    lastAtom = atom;
+                }
             } else {
                 tooltip.style.display = 'none';
+                lastAtom = null;
             }
-        });
+        };
 
+        viewerElement.addEventListener('mousemove', handleMouseMove);
         viewerElement.addEventListener('mouseleave', () => {
             tooltip.style.display = 'none';
+            lastAtom = null;
         });
     }
 
@@ -196,9 +204,11 @@
 
             try {
                 currentCIF = generateCIF(material);
-                viewer = $3Dmol.createViewer(document.getElementById("viewer"), { 
+                viewer = $3Dmol.createViewer(document.getElementById("viewer"), {
                     backgroundColor: "white",
-                    defaultZoom: 1.0
+                    defaultZoom: 1.0,
+                    hoverDuration: 50,
+                    enableHover: true
                 });
                 viewer.addModel(currentCIF, "cif");
                 
