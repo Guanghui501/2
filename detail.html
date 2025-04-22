@@ -6,6 +6,7 @@
     <title>材料详情 - Nemesis</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.1/3Dmol-min.js"></script>
     <style>
+        /* 保持原有基础样式不变 */
         body, html {
             height: 100%;
             margin: 0;
@@ -80,17 +81,32 @@
         .download-btn:hover {
             background-color: #45a049;
         }
-        .tooltip {
-            position: fixed;
+        .toggle-btn {
+            background-color: #2196F3;
+        }
+        .toggle-btn:hover {
+            background-color: #1976D2;
+        }
+        .atom-label {
+            position: absolute;
             background: rgba(0,0,0,0.8);
             color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
             pointer-events: none;
-            display: none;
-            font-size: 14px;
+            transform: translate(5px, 5px);
             z-index: 1000;
-            transform: translate(10px, 10px);
+            display: none;
+        }
+        .label-visible .atom-label {
+            display: block;
+        }
+        .viewer-hint {
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -107,14 +123,16 @@
             
             <div class="button-container">
                 <button id="download-cif" class="btn download-btn" disabled>下载CIF文件</button>
+                <button id="toggle-labels" class="btn toggle-btn">显示原子标签</button>
             </div>
         </div>
 
         <div class="viewer-container">
             <div id="viewer">
                 <div id="viewer-message">加载结构中...</div>
-                <div id="atom-tooltip" class="tooltip"></div>
+                <div id="label-container"></div>
             </div>
+            <div class="viewer-hint">点击上方按钮或按空格键切换标签</div>
         </div>
     </div>
 
@@ -123,7 +141,8 @@
     const id = urlParams.get('id');
     let currentCIF = '';
     let viewer = null;
-    let tooltip = null;
+    let labelsVisible = false;
+    const labelCache = new Map();
 
     function formatFormula(formula) {
         return formula.replace(/(\D)(\d+)/g, (_, element, num) => `${element}<sub>${num}</sub>`);
@@ -150,37 +169,66 @@
         return cif;
     }
 
+    function toggleAtomLabels() {
+        labelsVisible = !labelsVisible;
+        const container = document.getElementById('label-container');
+        const btn = document.getElementById('toggle-labels');
+        container.classList.toggle('label-visible', labelsVisible);
+        btn.textContent = labelsVisible ? '隐藏原子标签' : '显示原子标签';
+        
+        if (labelsVisible && labelCache.size === 0) {
+            createAtomLabels();
+        }
+    }
+
+    function createAtomLabels() {
+        const model = viewer.getModel(0);
+        const atoms = model.selectedAtoms({});
+        const container = document.getElementById('label-container');
+        container.innerHTML = '';
+        labelCache.clear();
+
+        atoms.forEach(atom => {
+            const label = document.createElement('div');
+            label.className = 'atom-label';
+            label.textContent = atom.elem;
+            container.appendChild(label);
+            labelCache.set(atom, label);
+        });
+        updateAllLabelPositions();
+        window.addEventListener('resize', updateAllLabelPositions);
+    }
+
+    function updateLabelPosition(atom, label) {
+        const pos = $3Dmol.getAtomPosition(atom);
+        const canvasPos = viewer.project(pos);
+        
+        if (canvasPos.z < 1) {
+            label.style.left = `${canvasPos.x}px`;
+            label.style.top = `${canvasPos.y}px`;
+        }
+    }
+
+    function updateAllLabelPositions() {
+        labelCache.forEach((label, atom) => {
+            updateLabelPosition(atom, label);
+        });
+    }
+
     function initViewerInteractions() {
-        const viewerElement = document.getElementById('viewer');
-        tooltip = document.getElementById('atom-tooltip');
-        let lastAtom = null;
-
-        const handleMouseMove = (event) => {
-            const rect = viewerElement.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            
-            const picked = viewer.getModel(0).selectedAtoms({x: x, y: y});
-            
-            if (picked.length > 0) {
-                const atom = picked[0];
-                if (atom !== lastAtom) {
-                    tooltip.textContent = atom.elem;
-                    tooltip.style.left = `${event.clientX + 15}px`;
-                    tooltip.style.top = `${event.clientY + 15}px`;
-                    tooltip.style.display = 'block';
-                    lastAtom = atom;
-                }
-            } else {
-                tooltip.style.display = 'none';
-                lastAtom = null;
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                toggleAtomLabels();
             }
-        };
+        });
 
-        viewerElement.addEventListener('mousemove', handleMouseMove);
-        viewerElement.addEventListener('mouseleave', () => {
-            tooltip.style.display = 'none';
-            lastAtom = null;
+        document.getElementById('toggle-labels').addEventListener('click', toggleAtomLabels);
+
+        viewer.setAnimationLoop(() => {
+            if (labelsVisible) {
+                updateAllLabelPositions();
+            }
         });
     }
 
@@ -207,8 +255,8 @@
                 viewer = $3Dmol.createViewer(document.getElementById("viewer"), {
                     backgroundColor: "white",
                     defaultZoom: 1.0,
-                    hoverDuration: 50,
-                    enableHover: true
+                    hoverDuration: 0,
+                    enableHover: false
                 });
                 viewer.addModel(currentCIF, "cif");
                 
