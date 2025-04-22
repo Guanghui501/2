@@ -77,9 +77,9 @@
                 document.getElementById('pd').innerText = material.P_d?.toFixed(3) ?? 'N/A';
 
                 try {
-                    const xyz = generateXYZ(material);
+                    const cif = generateCIF(material);
                     const viewer = $3Dmol.createViewer("viewer", { backgroundColor: "white" });
-                    viewer.addModel(xyz, "xyz");
+                    viewer.addModel(cif, "cif");
                     viewer.setStyle({}, { stick: {}, sphere: { scale: 0.3 } });
                     viewer.zoomTo();
                     viewer.render();
@@ -97,14 +97,25 @@
                 document.getElementById('viewer-message').innerText = "Failed to fetch structure.";
             });
 
-        function generateXYZ(data) {
-            const { symbols, positions } = data;
-            let xyz = `${symbols.length}\n\n`;
+        function generateCIF(data) {
+            const { cell, symbols, positions } = data;
+            let cif = "data_generated\n";
+            cif += "_cell_length_a " + cell[0][0].toFixed(6) + "\n";
+            cif += "_cell_length_b " + cell[1][1].toFixed(6) + "\n";
+            cif += "_cell_length_c " + cell[2][2].toFixed(6) + "\n";
+            cif += "_cell_angle_alpha 90\n";
+            cif += "_cell_angle_beta 90\n";
+            cif += "_cell_angle_gamma 90\n";
+            cif += "loop_\n_atom_site_label\n_atom_site_fract_x\n_atom_site_fract_y\n_atom_site_fract_z\n";
+
             for (let i = 0; i < symbols.length; i++) {
                 const [x, y, z] = positions[i];
-                xyz += `${symbols[i]} ${x.toFixed(6)} ${y.toFixed(6)} ${z.toFixed(6)}\n`;
+                const fx = x / cell[0][0];
+                const fy = y / cell[1][1];
+                const fz = z / cell[2][2];
+                cif += `${symbols[i]} ${fx.toFixed(6)} ${fy.toFixed(6)} ${fz.toFixed(6)}\n`;
             }
-            return xyz;
+            return cif;
         }
 
         function formatFormula(formula) {
