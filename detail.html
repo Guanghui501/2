@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>材料详情 - Nemesis</title>
+    <title>Material Details - Nemesis</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.1/3Dmol-min.js"></script>
     <style>
         /* 保持原有样式不变 */
@@ -98,17 +98,17 @@
     <div class="container">
         <div class="info">
             <h2 id="formula">加载中...</h2>
-            <p><strong>能量:</strong> <span id="energy"></span> eV</p>
-            <p><strong>质量密度:</strong> <span id="density"></span> g/cm³</p>
-            <p><strong>氮浓度:</strong> <span id="n_concentration"></span>%</p>
-            <p><strong>爆轰能量 (E<sub>d</sub>):</strong> <span id="ed"></span> kJ/g</p>
-            <p><strong>爆轰速度 (V<sub>d</sub>):</strong> <span id="vd"></span> km/s</p>
-            <p><strong>爆轰压力 (P<sub>d</sub>):</strong> <span id="pd"></span> GPa</p>
+            <p><strong>Energy:</strong> <span id="energy"></span> eV</p>
+            <p><strong>Mass Density:</strong> <span id="density"></span> g/cm³</p>
+            <p><strong>Nitrogen Concentration:</strong> <span id="n_concentration"></span>%</p>
+            <p><strong>Energy Density (E<sub>d</sub>):</strong> <span id="ed"></span> kJ/g</p>
+            <p><strong>Detonation Velocity (V<sub>d</sub>):</strong> <span id="vd"></span> km/s</p>
+            <p><strong>Detonation Pressure (P<sub>d</sub>):</strong> <span id="pd"></span> GPa</p>
             
             <div class="button-container">
-                <button id="download-cif" class="btn download-btn" disabled>下载CIF文件</button>
-                <button id="toggle-lattice" class="btn toggle-lattice-btn" disabled>显示晶格</button>
-                <button id="toggle-labels" class="btn toggle-labels-btn" disabled>显示原子标签</button>
+                <button id="download-cif" class="btn download-btn" disabled>Download the CIF file</button>
+                <button id="toggle-lattice" class="btn toggle-lattice-btn" disabled>Display the lattice pattern</button>
+                <button id="toggle-labels" class="btn toggle-labels-btn" disabled>Display atomic labels</button>
             </div>
         </div>
 
@@ -244,13 +244,13 @@
 
     document.getElementById('toggle-lattice').addEventListener('click', function() {
         latticeVisible = !latticeVisible;
-        this.textContent = latticeVisible ? "隐藏晶格" : "显示晶格";
+        this.textContent = latticeVisible ? "Hide the lattice pattern" : "Display the lattice pattern";
         renderAtomsAndBonds();
     });
 
     document.getElementById('toggle-labels').addEventListener('click', function() {
         labelsVisible = !labelsVisible;
-        this.textContent = labelsVisible ? "隐藏原子标签" : "显示原子标签";
+        this.textContent = labelsVisible ? "Hide atomic labels" : "Display atomic labels";
         renderAtomsAndBonds();
     });
 
