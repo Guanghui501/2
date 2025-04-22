@@ -155,7 +155,8 @@
                     });
                     viewer.addModel(currentCIF, "cif");
 
-                    renderAtomsAndBonds();
+                    // 初始渲染
+                    renderStructure();
 
                     viewer.zoomTo();
                     viewer.center();
@@ -176,9 +177,14 @@
                 document.getElementById('viewer-message').innerText = "无法获取结构数据。";
             });
 
-        function renderAtomsAndBonds() {
+        function renderStructure() {
             if (!viewer) return;
 
+            // 清除所有标签和形状
+            viewer.clearLabels();
+            viewer.removeAllShapes();
+
+            // 设置原子和键的样式
             viewer.setStyle({}, {
                 stick: {},
                 sphere: {
@@ -187,7 +193,7 @@
                 }
             });
 
-            if (labelsVisible) addAtomLabels();
+            // 添加晶格（如果需要）
             if (latticeVisible) {
                 viewer.addUnitCell({
                     box: { color: 0x0000ff, radius: 0.1 },
@@ -195,6 +201,11 @@
                     b: { color: 0x00ff00, radius: 0.1 },
                     c: { color: 0x0000ff, radius: 0.1 }
                 });
+            }
+
+            // 添加标签（如果需要）
+            if (labelsVisible) {
+                addAtomLabels();
             }
 
             viewer.render();
@@ -238,22 +249,16 @@
             if (!viewer) return;
 
             latticeVisible = !latticeVisible;
-            this.textContent = latticeVisible ? "Conceal the lattice pattern" : "Display the lattice pattern";
-
-            viewer.removeAllModels();
-            viewer.addModel(currentCIF, "cif");
-            renderAtomsAndBonds();
+            this.textContent = latticeVisible ? "隐藏晶格" : "显示晶格";
+            renderStructure();
         });
 
         document.getElementById('toggle-labels').addEventListener('click', function () {
             if (!viewer) return;
 
             labelsVisible = !labelsVisible;
-            this.textContent = labelsVisible ? "Conceal atomic labels" : "Display atomic labels";
-
-            viewer.removeAllModels();
-            viewer.addModel(currentCIF, "cif");
-            renderAtomsAndBonds();
+            this.textContent = labelsVisible ? "隐藏原子标签" : "显示原子标签";
+            renderStructure();
         });
 
         function generateCIF(data) {
