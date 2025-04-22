@@ -34,6 +34,7 @@
             flex: 1;
             min-width: 300px;
             max-width: 600px;
+            position: relative;
         }
         #viewer {
             width: 100%;
@@ -79,29 +80,17 @@
         .download-btn:hover {
             background-color: #45a049;
         }
-        .atom-labels {
-            margin-top: 15px;
-            padding: 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-        }
-        .atom-label-container {
-            display: inline-flex;
-            align-items: center;
-            margin: 5px;
-        }
-        .atom-label {
-            margin-right: 8px;
+        .tooltip {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            display: none;
             font-size: 14px;
-        }
-        .atom-preview {
-            width: 24px;
-            height: 24px;
-            position: relative;
-            margin-left: 5px;
-            background-color: white;
-            border-radius: 50%;
-            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
         }
     </style>
 </head>
@@ -124,9 +113,7 @@
         <div class="viewer-container">
             <div id="viewer">
                 <div id="viewer-message">加载结构中...</div>
-            </div>
-            <div class="atom-labels" id="atom-labels">
-                <strong>原子组成：</strong>
+                <div id="atom-tooltip" class="tooltip"></div>
             </div>
         </div>
     </div>
@@ -136,6 +123,7 @@
     const id = urlParams.get('id');
     let currentCIF = '';
     let viewer = null;
+    let tooltip = null;
 
     function formatFormula(formula) {
         return formula.replace(/(\D)(\d+)/g, (_, element, num) => `${element}<sub>${num}</sub>`);
@@ -162,52 +150,29 @@
         return cif;
     }
 
-    function createAtomPreview(element) {
-        const container = document.createElement('div');
-        container.className = 'atom-preview';
-        
-        const viewer = $3Dmol.createViewer(container, {
-            width: 24,
-            height: 24,
-            backgroundColor: "white"
-        });
-        
-        viewer.addModel(`HETATM 1 ${element} X 1 0 0 0 0 0 ${element}`, "pdb");
-        viewer.setStyle({}, {
-            sphere: {
-                scale: 0.3,
-                colorscheme: 'Jmol'
-            } 
-        });
-        
-        viewer.zoomTo();
-        viewer.setViewStyle({style: "outline"});
-        viewer.setBackgroundColor(0xffffff);
-        viewer.render();
-        
-        return container;
-    }
+    function initViewerInteractions() {
+        const viewerElement = document.getElementById('viewer');
+        tooltip = document.getElementById('atom-tooltip');
 
-    function displayAtomComposition(symbols) {
-        const labelContainer = document.getElementById('atom-labels');
-        const elementCounts = {};
-
-        symbols.forEach(element => {
-            elementCounts[element] = (elementCounts[element] || 0) + 1;
+        viewerElement.addEventListener('mousemove', (event) => {
+            const rect = viewerElement.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            const atom = viewer.getHoveredAtom({x: x, y: y});
+            
+            if (atom) {
+                tooltip.textContent = atom.elem;
+                tooltip.style.left = `${event.clientX + 10}px`;
+                tooltip.style.top = `${event.clientY + 10}px`;
+                tooltip.style.display = 'block';
+            } else {
+                tooltip.style.display = 'none';
+            }
         });
 
-        Object.entries(elementCounts).forEach(([element, count]) => {
-            const container = document.createElement('div');
-            container.className = 'atom-label-container';
-            
-            const label = document.createElement('span');
-            label.className = 'atom-label';
-            label.textContent = `${element}${count > 1 ? count : ''}`;
-            
-            container.appendChild(label);
-            container.appendChild(createAtomPreview(element));
-            
-            labelContainer.appendChild(container);
+        viewerElement.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
         });
     }
 
@@ -228,10 +193,6 @@
             document.getElementById('ed').innerText = material.E_d?.toFixed(3) ?? 'N/A';
             document.getElementById('vd').innerText = material.V_d?.toFixed(3) ?? 'N/A';
             document.getElementById('pd').innerText = material.P_d?.toFixed(3) ?? 'N/A';
-
-            if (material.symbols) {
-                displayAtomComposition(material.symbols);
-            }
 
             try {
                 currentCIF = generateCIF(material);
@@ -259,6 +220,7 @@
                 viewer.zoomTo();
                 viewer.center();
                 viewer.render();
+                initViewerInteractions();
 
                 document.getElementById('download-cif').disabled = false;
                 const messageDiv = document.getElementById("viewer-message");
